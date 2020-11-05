@@ -74,8 +74,9 @@ const userSchema = new mongoose.Schema({
         default:""
     },
     status:{
-        type:String,
-        default:"offline"
+        current:{type:String,default:"online"},
+        lastonline:{type: String,default: Date.now.toString()}
+        
     }
 
 },{timestamps:true})

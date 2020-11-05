@@ -85,11 +85,13 @@ route.post('/createconversation/:userid',usersignin,(req,res)=>{
 
 route.get('/find/:roomid',usersignin,(req,res)=>{
     Conversation.findById(req.params.roomid)
+    .populate('member','-password')
     .then(con=>{
         if(!con){
-           return res.status(200).json({seccess:false,messages:[]})
+           return res.status(200).json({seccess:false,messages:[],member:{}})
         }
-        res.status(200).json({seccess:true,messages:con.messages})
+
+        res.status(200).json({seccess:true,messages:con.messages,member:con.member})
 
     })
 })

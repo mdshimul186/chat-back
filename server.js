@@ -73,7 +73,8 @@ function deleteChatSocket(socket){
 
 
 let updateOnline=(userId,status,id)=>{
-    User.findOneAndUpdate({_id:userId},{$set:{status:status}},{new:true})
+    
+    User.findOneAndUpdate({_id:userId},{$set:{status:{current:status,lastonline:Date.now().toString()}}},{new:true})
     .then(user=>{
        if(id){
 
@@ -105,6 +106,12 @@ io.on('connection', function(socket){
 
     socket.on('joinroom',(roomid)=>{
         socket.join(roomid)
+        
+
+    })
+
+    socket.on('typing',(data)=>{
+        socket.to(data.to).emit('istyping', data)
         
 
     })
