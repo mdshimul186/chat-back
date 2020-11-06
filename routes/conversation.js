@@ -16,7 +16,7 @@ route.patch('/sendtext/:conversationid',usersignin,(req,res)=>{
             let rcv=''
             let rcvid = ''
             conversation.member.map(m=>{
-                if(m._id != req.user._Id){
+                if(m._id != req.user._id){
                 
                     rcv = m.username
                     rcvid = m._id
@@ -27,34 +27,25 @@ route.patch('/sendtext/:conversationid',usersignin,(req,res)=>{
             if(rcv !== ''){
             Conversation.findOneAndUpdate({_id:conversation._id},{$push:{messages:{type:"text",sender:req.user._id,body:body}}},{new:true})
             .populate('member',"-password")
-            .then(con=>{
-               //console.log('works');
-                
+            .then(con=>{    
+
                 //let socket = getChatSocket(rcv)
               
                   //if(socket && socket.id){
                       //io.to(socket.id).emit('newmessage',con)
                       //io.to(socket.id).emit(req.user._id,con.messages)
                   //}
-                  io.in(rcvid).emit("newmessage",con)
-                  io.in(req.user._id).emit("newmessage",con)
+                  
+                  io.to(rcvid).emit("newmessage",con)
+                  io.to(req.user._id).emit("newmessage",con)
             io.in(con._id).emit("newconversation",con.messages)
-                //res.status(200).json({messages:con.messages})
+                res.status(200).json({messages:con.messages})
             })
         }
         }
 
 
-        // if(!conversation){
-        //     let newConversation = new Conversation({
-        //         member:[req.user._id,receiverid],
-        //         messages:[{type:"text",sender:req.user._id,body:body}]
-        //     })
-        //     newConversation.save()
-        //     .then(con2=>{
-        //         res.status(200).json({messages:con2.messages})
-        //     })
-        // }
+    
     })
 })
 
