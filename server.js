@@ -73,8 +73,8 @@ function deleteChatSocket(socket){
 
 
 let updateOnline=(userId,status,id)=>{
-    
-    User.findOneAndUpdate({_id:userId},{$set:{status:{current:status,lastonline:Date.now().toString()}}},{new:true})
+    //console.log(new Date().toString());
+    User.findOneAndUpdate({_id:userId},{$set:{status:{current:status,lastonline:new Date().toISOString()}}},{new:true})
     .then(user=>{
        if(id){
 
@@ -118,12 +118,20 @@ io.on('connection', function(socket){
 
     socket.on('callUser', (data)=>{
       
-        socket.to(data.userToCall).emit('hey', {signal: data.signalData, from: data.from})
+        socket.to(data.userToCall).emit('hey', {signal: data.signalData, from: data.from, activity:data.activity})
     })
 
     socket.on('acceptCall', (data)=>{
         
         io.to(data.to).emit('callAccepted', data.signal)
+    })
+
+    socket.on('close', (data)=>{
+        socket.to(data.to).emit('close')
+    })
+
+    socket.on('rejected', (data)=>{
+        socket.to(data.to).emit('rejected')
     })
          
     socket.on('disconnect', function() { 
