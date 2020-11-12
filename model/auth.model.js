@@ -33,34 +33,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         default:""
     },
-    address:{
-        type: String,
-        default:""
-    },
-    bio:{
-        type: String,
-        default:""
-    },
-    city:{
-        type: String,
-        default:""
-    },
-    state:{
-        type: String,
-        default:""
-    },
-    zipcode:{
-        type: String,
-        default:""
-    },
-    country:{
-        type: String,
-        default:""
-    },
-    dateofbirth:{
-        type: String,
-        default: Date.now
-    },
     date:{
         type: Date,
         default: Date.now
@@ -69,15 +41,15 @@ const userSchema = new mongoose.Schema({
         type:String,
         default:''
     },
-    coverimg:{
-        type:String,
-        default:""
-    },
     status:{
         current:{type:String,default:"online"},
         lastonline:{type: String,default: Date.now.toString()}
         
-    }
+    },
+    favourites:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+        }]
 
 },{timestamps:true})
 

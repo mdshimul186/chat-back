@@ -146,6 +146,8 @@ io.on('connection', function(socket){
     // }); 
 });
 
+
+//export this function to use inner route if necessary
 module.exports ={getChatSocket,setChatSocket,deleteChatSocket}
 
 app.use('/user', require('./routes/auth'))

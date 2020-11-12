@@ -25,6 +25,8 @@ const storage = new CloudinaryStorage({
    
   var upload = multer({ storage: storage })
 
+
+  
 route.post('/signup', (req, res)=>{
     const {first, last, email, password,confirm} = req.body
     const register = registerValidator(first,last, email, password, confirm)
@@ -64,9 +66,6 @@ route.post('/signup', (req, res)=>{
         )
         
     }
-
-   
-    
     
 })
 
@@ -115,43 +114,24 @@ route.post('/signin', (req,res)=>{
 
 })
 
-
+//set profile image api
 route.put('/profileimg',usersignin,upload.single('profileimg'),(req,res)=>{
     const file = req.file
     User.findByIdAndUpdate(req.user._id,{$set:{profileimg:file.path}},{new:true})
     .select('-password')
     .then(user=>{
-        let newpost = new Post({
-            post:'',user: user._id, image:user.profileimg,activity:'Updated profile photo'
-        })
-        newpost.save()
-        Post.populate(newpost,{path:"user",select:"_id first last email"})
-        .then(post=>{
-            res.status(200).json({post,user:user})
-        })
+        res.status(200).json({user:user})
     })
 })
 
 
-route.put('/coverimg',usersignin,upload.single('coverimg'),(req,res)=>{
-    const file = req.file
-    User.findByIdAndUpdate(req.user._id,{$set:{coverimg:file.path}},{new:true})
-    .select('-password')
-    .then(user=>{
-        let newpost = new Post({
-            post:'',user: user._id, image:user.coverimg,activity:'Updated cover photo'
-        })
-        newpost.save()
-        Post.populate(newpost,{path:"user",select:"_id first last email"})
-        .then(post=>{
-            res.status(200).json({post,user:user})
-        })
-    })
-})
 
+
+//get profile info api
 route.get('/profile',usersignin,(req,res)=>{
     User.findById(req.user._id)
     .select('-password')
+    .populate('favourites','-password')
     .then(user=>{
         res.status(200).json({user})
     })
@@ -161,56 +141,6 @@ route.get('/profile',usersignin,(req,res)=>{
 
 
 
-
-
-route.put('/update',usersignin,(req,res)=>{
-    let setobj={
-        first:req.body.first,
-        last:req.body.last,
-        bio:req.body.bio,
-        gender:req.body.gender,
-        city:req.body.city,
-        country:req.body.country,
-        state:req.body.state,
-        dateofbirth:req.body.dateofbirth,
-        email:req.body.email,
-        username:req.body.username
-    }
-
-    if (!req.body.email) {
-        return res.status(404).json({error:"Please provide your email"})
-        
-    } else if (!validator.isEmail(req.body.email)) {
-        return res.status(404).json({error:"Invalid email"})
-  
-    }
-    if (!req.body.username) {
-        return res.status(404).json({error:"Username can't be empty"})
-        
-    } 
-    
-
-    User.findOne({email:req.body.email})
-    .then(useremail=>{
-        if(useremail && (useremail._id != req.user._id)){
-           return res.status(404).json({error:"Email already taken"})
-        }
-        User.findOne({username:req.body.username})
-        .then(username=>{
-            if(username && (username._id != req.user._id)){
-                return res.status(404).json({error:"Username is not available, try another"})
-             }
-
-             User.findByIdAndUpdate(req.user._id,{$set:setobj},{new:true})
-            .select('-password')
-            .then(user=>{
-                res.status(200).json({user,message:"saved successfully"})
-            })
-        })
-    })
-    
-
-})
 
 //password change api
 route.patch('/changepassword',usersignin,(req,res)=>{
@@ -260,55 +190,8 @@ route.patch('/changepassword',usersignin,(req,res)=>{
 })
 
 
-route.delete('/delete',usersignin,(req,res)=>{
-    User.findById(req.user._id)
-    .then(user=>{
-        let images = []
-        let posts = []
-
-        Post.find({user:user._id})
-        .then(userpost=>{
-            userpost.map(p=>{
-                
-                posts.push(p._id)
-                p.image.map(img=>{
-                    let id = img.split('/').pop()
-                    images.push((id.split('.')[0]));
-                })
-            })
 
 
-
-            if(user.profileimg){
-                let id = user.profileimg.split('/').pop()
-                images.push((id.split('.')[0]));
-        
-              }
-        
-              if(user.coverimg){
-                let id = user.coverimg.split('/').pop()
-                images.push((id.split('.')[0]));
-        
-              }
-
-              user.deleteOne()
-              .then(udelete=>{
-                 Post.deleteMany({_id: { $in: posts}})
-                 .then(pdelete=>{
-                   cloudinary.api.delete_resources(images,function(error, result) {
-                     console.log(result);
-                     res.status(200).json({success:true})
-                 });
-                 })
-              })
-              
-
-            
-        })
-
-        
-    })
-})
 
 
 route.get("/alluser",usersignin,(req,res)=>{
@@ -317,5 +200,31 @@ route.get("/alluser",usersignin,(req,res)=>{
     .then(user=>{
         res.status(200).json({seccess:true,user})
     })
+})
+
+
+
+route.put('/favourite/:userid',usersignin,(req,res)=>{
+   User.findById(req.user._id)
+   .select('-password')
+   .then(user=>{
+        if(user.favourites.includes(req.params.userid)){
+            User.findByIdAndUpdate(user._id,{$pull:{favourites:req.params.userid}},{new:true})
+            .select('-password')
+            .populate('favourites','-password')
+            .then(u=>{
+               
+                res.status(200).json({seccess:true,user:u})
+            })
+        }else{
+            User.findByIdAndUpdate(user._id,{$push:{favourites:req.params.userid}},{new:true})
+            .select('-password')
+            .populate('favourites','-password')
+            .then(u=>{
+               
+                res.status(200).json({seccess:true,user:u})
+            }) 
+        }
+   })
 })
 module.exports = route
